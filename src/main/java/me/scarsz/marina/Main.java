@@ -28,8 +28,8 @@ public class Main {
                 }
                 public HttpURLConnection create(URL url, Proxy proxy) throws IOException {
                     HttpURLConnection connection = (HttpURLConnection) (proxy == null ? url.openConnection() : url.openConnection(proxy));
-                    connection.setRequestProperty("User-Agent", "Audrey");
-                    if (url.toString().contains("https://api.github.com") && githubSecret != null) {
+                    connection.setRequestProperty("User-Agent", "Marina");
+                    if (url.toString().contains("https://api.github.com")) {
                         connection.setRequestProperty("Authorization", "Basic " + Base64.encodeBase64String((githubClient + ":" + githubSecret).getBytes()));
                     }
                     connection.setConnectTimeout(5000);
