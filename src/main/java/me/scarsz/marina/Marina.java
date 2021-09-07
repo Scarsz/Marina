@@ -39,6 +39,7 @@ public class Marina {
             new ChannelLoggingHandler(() -> this.jda.getTextChannelById(System.getenv("LOGGING_CHANNEL")), c -> {
                 c.mapLoggerName("com.github.dockerjava", "Docker");
                 c.mapLoggerName("net.dv8tion.jda", "JDA");
+                c.mapLoggerName("org.mongodb", "MongoDB");
                 c.mapLoggerNameFriendly("me.scarsz.marina.feature", name -> name.replace("Feature", " Feature"));
                 c.mapLoggerNameFriendly("me.scarsz.marina", name -> "Marina > " + name);
             }).attachJavaLogging().schedule();
