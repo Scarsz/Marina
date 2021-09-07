@@ -2,7 +2,7 @@
 Yet another project management Discord bot.
 
 # Features
-- Manages Docker containers on the host machine.
+- [Manages Docker containers on the host machine.](#managing-docker-containers)
   - Intended for communities that make extensive use of Docker containers to deploy services.
 
 # Managing Docker containers
