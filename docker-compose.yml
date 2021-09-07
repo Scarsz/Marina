@@ -1,0 +1,32 @@
+version: "3"
+
+services:
+  marina:
+    image: scarsz/marina
+#    build: https://github.com/Scarsz/Marina
+    container_name: marina
+    environment:
+      - TOKEN=${TOKEN}
+      - SUPERUSERS=${SUPERUSERS:-95088531931672576}
+      - LOGGING_CHANNEL=${LOGGING_CHANNEL}
+      - GITHUB_CLIENT=${GITHUB_CLIENT}
+      - GITHUB_SECRET=${GITHUB_SECRET}
+      - DOCKER_USER=${DOCKER_USER:-root}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    restart: always
+
+  watchtower:
+    image: containrrr/watchtower
+    container_name: watchtower
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /home/${DOCKER_USER:-root}/.docker/config.json:/config.json
+    command: --interval 30
+    restart: always
+
+  mongo:
+    image: mongo
+    container_name: mongo
+    volumes:
+      - ./data/mongo:/data/db
