@@ -37,6 +37,7 @@ and [`.env`](https://github.com/Scarsz/Marina/blob/master/example.env) files.
 3. Save [docker-compose.yml](https://github.com/Scarsz/Marina/blob/master/docker-compose.yml) to a fresh directory
 4. Save [example.env](https://github.com/Scarsz/Marina/blob/master/example.env) as .env and fill in your values
    - `TOKEN` Bot token Marina should use.
+   - `WATCHING`/`PLAYING` Activity status the bot will display on Discord. If unset, defaults to `watching 🚢 ⛵`
    - `SUPERUSERS` Comma-separated list of user IDs that always pass permission checks within the bot.
    - `LOGGING_CHANNEL` Channel ID of a logging channel for the bot.
    - `GITHUB_CLIENT` / `GITHUB_SECRET` GitHub application credentials, used when making GitHub API calls.

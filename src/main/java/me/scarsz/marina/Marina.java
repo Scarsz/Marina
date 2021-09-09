@@ -33,7 +33,13 @@ public class Marina {
         this.usersCollection = this.datastore.getCollection("users");
 
         this.jda = JDABuilder.createDefault(System.getenv("TOKEN"))
-                .setActivity(Activity.playing("with my 🍭"))
+                .setActivity(
+                        StringUtils.isNotBlank(System.getenv("WATCHING")) ?
+                                Activity.watching(System.getenv("WATCHING"))
+                        : StringUtils.isNotBlank(System.getenv("PLAYING")) ?
+                                Activity.playing(System.getenv("PLAYING"))
+                        : Activity.watching("🚢 ⛵")
+                )
                 .build();
         if (StringUtils.isNotBlank(System.getenv("LOGGING_CHANNEL"))) {
             new ChannelLoggingHandler(() -> this.jda.getTextChannelById(System.getenv("LOGGING_CHANNEL")), c -> {
