@@ -42,6 +42,7 @@ public class Marina {
                 c.mapLoggerName("org.mongodb", "MongoDB");
                 c.mapLoggerNameFriendly("me.scarsz.marina.feature", name -> name.replace("Feature", " Feature"));
                 c.mapLoggerNameFriendly("me.scarsz.marina", name -> "Marina > " + name);
+                c.addFilter(logItem -> logItem.getMessage().contains("dockerHttpClient")); // useless warning
             }).attachJavaLogging().schedule();
         }
         this.jda.awaitReady();
