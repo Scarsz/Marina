@@ -3,6 +3,7 @@ package me.scarsz.marina;
 import com.mongodb.MongoClient;
 import lombok.Getter;
 import me.scarsz.jdaappender.ChannelLoggingHandler;
+import me.scarsz.marina.feature.AbstractFeature;
 import me.scarsz.marina.feature.DevelopmentFeature;
 import me.scarsz.marina.feature.docker.DockerFeature;
 import net.dv8tion.jda.api.JDA;
@@ -15,6 +16,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.security.auth.login.LoginException;
+import java.util.HashMap;
+import java.util.Map;
 
 public class Marina {
 
@@ -23,8 +26,8 @@ public class Marina {
 
     @Getter private final Jongo datastore;
     @Getter private final MongoCollection usersCollection;
-    @Getter private final Permissions permissions;
     @Getter private final JDA jda;
+    @Getter private final Map<Class<? extends AbstractFeature>, AbstractFeature> features = new HashMap<>();
 
     public Marina() throws LoginException, InterruptedException {
         Marina.instance = this;
@@ -52,9 +55,17 @@ public class Marina {
             }).attachJavaLogging().schedule();
         }
         this.jda.awaitReady();
-        this.jda.addEventListener(this.permissions = new Permissions());
-        this.jda.addEventListener(new DevelopmentFeature());
-        this.jda.addEventListener(new DockerFeature());
+
+        // features
+        new Permissions();
+        new DevelopmentFeature();
+        new DockerFeature();
+//        new TagsFeature();
+    }
+
+    public static <F extends AbstractFeature> F getFeature(Class<F> clazz) {
+        //noinspection unchecked
+        return (F) Marina.instance.getFeatures().get(clazz);
     }
 
 }

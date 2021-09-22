@@ -3,6 +3,7 @@ package me.scarsz.marina.feature;
 import lombok.SneakyThrows;
 import me.scarsz.marina.Command;
 import me.scarsz.marina.Marina;
+import me.scarsz.marina.Permissions;
 import me.scarsz.marina.exception.InsufficientPermissionException;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.ISnowflake;
@@ -16,8 +17,8 @@ import java.lang.reflect.Method;
 public abstract class AbstractFeature extends ListenerAdapter implements Feature {
 
     public AbstractFeature() {
-        // register feature to receive events from JDA
         getJda().addEventListener(this);
+        Marina.getInstance().getFeatures().put(this.getClass(), this);
     }
 
     @Override
@@ -28,7 +29,7 @@ public abstract class AbstractFeature extends ListenerAdapter implements Feature
         for (Method method : getClass().getDeclaredMethods()) {
             Command command = method.getAnnotation(Command.class);
             if (command != null && command.value().equalsIgnoreCase(target)) {
-                if (!command.permission().isEmpty() && !Marina.getInstance().getPermissions().hasPermission(event.getUser(), command.permission())) {
+                if (!command.permission().isEmpty() && !Marina.getFeature(Permissions.class).hasPermission(event.getUser(), command.permission())) {
                     event.reply("❌ Insufficient permission: " + command.permission()).queue();
                     return;
                 }
@@ -56,10 +57,10 @@ public abstract class AbstractFeature extends ListenerAdapter implements Feature
     }
 
     protected boolean hasPermission(ISnowflake snowflake, String permission) {
-        return Marina.getInstance().getPermissions().hasPermission(snowflake, permission);
+        return Marina.getFeature(Permissions.class).hasPermission(snowflake, permission);
     }
     protected void checkPermission(ISnowflake snowflake, String permission) throws InsufficientPermissionException {
-        Marina.getInstance().getPermissions().checkPermission(snowflake, permission);
+        Marina.getFeature(Permissions.class).checkPermission(snowflake, permission);
     }
 
     protected JDA getJda() {
