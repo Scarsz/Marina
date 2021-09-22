@@ -96,7 +96,7 @@ public class Permissions extends AbstractFeature {
                     String.join("\n", discordUser.getPermissions())
             )).complete();
         } else {
-            event.getHook().editOriginal("❌ " + targetUser.getAsMention() + " has no granted permissions`").complete();
+            event.getHook().editOriginal("❌ " + targetUser.getAsMention() + " has no granted permissions").complete();
         }
     }
     @Command(value = "test", permission = "admin")
