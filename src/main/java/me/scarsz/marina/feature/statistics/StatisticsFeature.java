@@ -39,7 +39,7 @@ public class StatisticsFeature extends AbstractFeature {
                 .queue();
     }
 
-    @Command("members")
+    @Command(name = "members")
     public void createMembersStatisticsChannelCommand(SlashCommandEvent event) {
         String tagName = event.getOption("tag").getAsString();
         StatisticChannel tag = StatisticChannel.findByName(tagName);

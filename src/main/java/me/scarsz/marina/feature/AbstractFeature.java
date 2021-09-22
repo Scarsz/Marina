@@ -28,7 +28,7 @@ public abstract class AbstractFeature extends ListenerAdapter implements Feature
 
         for (Method method : getClass().getDeclaredMethods()) {
             Command command = method.getAnnotation(Command.class);
-            if (command != null && command.value().equalsIgnoreCase(target)) {
+            if (command != null && command.name().equalsIgnoreCase(target)) {
                 if (!command.permission().isEmpty() && !Marina.getFeature(Permissions.class).hasPermission(event.getUser(), command.permission())) {
                     event.reply("❌ Insufficient permission: " + command.permission()).queue();
                     return;
