@@ -71,7 +71,7 @@ public class DockerFeature extends AbstractFeature {
         if (containerOption != null) {
             String container = containerOption.getAsString();
 
-            checkPermission(event.getUser(), "docker.container." + container.replace("-", "."));
+            checkPermission(event.getUser(), "docker.container." + container.replace("-", ".") + ".lifecycle");
             inspectContainer(container);
 
             event.getHook().editOriginal("🤔 Restarting `" + container + "`").complete();
@@ -95,7 +95,7 @@ public class DockerFeature extends AbstractFeature {
     @Command("update")
     public void updateCommand(SlashCommandEvent event) throws IllegalArgumentException, InsufficientPermissionException {
         String container = event.getOption("container").getAsString(); //TODO allow null container & selections
-        checkPermission(event.getUser(), "docker.container." + container.replace("-", "."));
+        checkPermission(event.getUser(), "docker.container." + container.replace("-", ".") + ".update");
         InspectContainerResponse preInspection = inspectContainer(container);
 
         try {
@@ -154,7 +154,7 @@ public class DockerFeature extends AbstractFeature {
     }
     private List<Container> listContainers(String nameFilter, ISnowflake snowflake) {
         return listContainers(nameFilter).stream()
-                .filter(container -> hasPermission(snowflake, "docker.container." + getContainerName(container).replace("-", ".")))
+                .filter(container -> hasPermission(snowflake, "docker.container." + getContainerName(container).replace("-", ".") + ".inspect"))
                 .collect(Collectors.toList());
     }
     private InspectContainerResponse inspectContainer(String container) throws IllegalArgumentException {
