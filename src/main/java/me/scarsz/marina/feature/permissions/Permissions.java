@@ -1,6 +1,9 @@
-package me.scarsz.marina;
+package me.scarsz.marina.feature.permissions;
 
-import me.scarsz.marina.entity.DiscordUser;
+import com.mongodb.MongoException;
+import lombok.Getter;
+import me.scarsz.marina.Command;
+import me.scarsz.marina.Marina;
 import me.scarsz.marina.exception.InsufficientPermissionException;
 import me.scarsz.marina.feature.AbstractFeature;
 import net.dv8tion.jda.api.entities.ISnowflake;
@@ -8,6 +11,7 @@ import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.interaction.SlashCommandEvent;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.SubcommandData;
+import org.jongo.MongoCollection;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -17,9 +21,20 @@ import java.util.Set;
 public class Permissions extends AbstractFeature {
 
     private static final Set<String> SUPERUSERS = new HashSet<>(Arrays.asList(System.getenv("SUPERUSERS").split(",")));
+    @Getter private final MongoCollection snowflakesCollection;
 
     public Permissions() {
         super();
+
+        MongoCollection usersCollection = Marina.getInstance().getDatastore().getCollection("users");
+        if (usersCollection.count() > 0) {
+            try {
+                usersCollection.getDBCollection().rename("snowflakes");
+            } catch (MongoException ignored) {
+                // we tried
+            }
+        }
+        this.snowflakesCollection = Marina.getInstance().getDatastore().getCollection("snowflakes");
 
         getJda().upsertCommand("permission", "Manage permissions")
                 .addSubcommands(new SubcommandData("grant", "Grant a permission to a user")
@@ -45,11 +60,11 @@ public class Permissions extends AbstractFeature {
         User targetUser = event.getOption("user").getAsUser();
         String permission = event.getOption("permission").getAsString();
 
-        DiscordUser user = new DiscordUser();
+        DiscordEntity user = new DiscordEntity();
         user.setId(targetUser.getId());
         user.setPermissions(Collections.singleton(permission));
 
-        DiscordUser.upsertBySnowflake(targetUser).with(user);
+        DiscordEntity.upsertBySnowflake(targetUser).with(user);
 
         event.getHook().editOriginal("✅ Added permission `" + permission + "` to " + targetUser.getAsMention()).complete();
     }
@@ -61,11 +76,11 @@ public class Permissions extends AbstractFeature {
         Set<String> newPermissions = new HashSet<>(getPermissions(targetUser));
         newPermissions.remove(permission);
 
-        DiscordUser user = new DiscordUser();
+        DiscordEntity user = new DiscordEntity();
         user.setId(targetUser.getId());
         user.setPermissions(newPermissions);
 
-        DiscordUser.upsertBySnowflake(targetUser).with(user);
+        DiscordEntity.upsertBySnowflake(targetUser).with(user);
 
         event.getHook().editOriginal("✅ Removed permission `" + permission + "` from " + targetUser.getAsMention()).complete();
     }
@@ -73,7 +88,7 @@ public class Permissions extends AbstractFeature {
     public void listCommand(SlashCommandEvent event) {
         User targetUser = event.getOption("user").getAsUser();
 
-        DiscordUser discordUser = DiscordUser.findBySnowflake(targetUser);
+        DiscordEntity discordUser = DiscordEntity.findBySnowflake(targetUser);
         if (discordUser != null) {
             event.getHook().editOriginal(String.format(
                     "✅ %s's permissions: ```\n%s\n```",
@@ -93,7 +108,7 @@ public class Permissions extends AbstractFeature {
         event.getHook().editOriginal(targetUser.getAsMention() + "'s value for `" + permission + "`: " + (value ? "✅" : "❌")).complete();
     }
 
-    public boolean hasPermission(DiscordUser user, String permission) {
+    public boolean hasPermission(DiscordEntity user, String permission) {
         do {
             if (user.getPermissions().contains(permission)) return true;
         } while (permission.contains(".") && (permission = permission.substring(0, permission.lastIndexOf("."))).contains("."));
@@ -101,7 +116,7 @@ public class Permissions extends AbstractFeature {
     }
     public boolean hasPermission(ISnowflake snowflake, String permission) {
         if (SUPERUSERS.contains(snowflake.getId())) return true;
-        DiscordUser user = DiscordUser.findBySnowflake(snowflake);
+        DiscordEntity user = DiscordEntity.findBySnowflake(snowflake);
         return user != null && hasPermission(user, permission);
     }
     public void checkPermission(ISnowflake snowflake, String permission) throws InsufficientPermissionException {
@@ -110,7 +125,7 @@ public class Permissions extends AbstractFeature {
         }
     }
     public Set<String> getPermissions(ISnowflake snowflake) {
-        DiscordUser user = DiscordUser.findBySnowflake(snowflake);
+        DiscordEntity user = DiscordEntity.findBySnowflake(snowflake);
         return user != null ? user.getPermissions() : Collections.emptySet();
     }
 

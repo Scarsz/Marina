@@ -27,6 +27,11 @@ public class TagsFeature extends AbstractFeature {
                 )
                 .addSubcommands(new SubcommandData("edit", "Edit (or create a new) tag")
                         .addOption(OptionType.STRING, "tag", "Tag name to edit", true)
+                        .addOption(OptionType.STRING, "aliases", "Comma-separated list of aliases for this tag")
+                        .addOption(OptionType.STRING, "color", "Embed color (x, y, y/#AABBCC) for this tag")
+                        .addOption(OptionType.STRING, "title", "Title for this tag")
+                        .addOption(OptionType.STRING, "thumbnail", "URL to a thumbnail image for this tag")
+                        .addOption(OptionType.STRING, "content", "Content for this tag")
                 )
                 .addSubcommands(new SubcommandData("delete", "Delete a tag")
                         .addOption(OptionType.STRING, "tag", "Tag name to delete", true)
@@ -58,7 +63,7 @@ public class TagsFeature extends AbstractFeature {
         if (tag != null) {
 
         } else {
-            event.getHook().editOriginal("❌ A tag doesn't exist by the name `" + tagName + "`").queue();
+
         }
     }
     @Command(value = "delete", permission = "tags")

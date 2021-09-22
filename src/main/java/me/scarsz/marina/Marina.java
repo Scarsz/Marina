@@ -6,12 +6,12 @@ import me.scarsz.jdaappender.ChannelLoggingHandler;
 import me.scarsz.marina.feature.AbstractFeature;
 import me.scarsz.marina.feature.DevelopmentFeature;
 import me.scarsz.marina.feature.docker.DockerFeature;
+import me.scarsz.marina.feature.permissions.Permissions;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.Activity;
 import org.apache.commons.lang.StringUtils;
 import org.jongo.Jongo;
-import org.jongo.MongoCollection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,7 +25,6 @@ public class Marina {
     @Getter private static final Logger logger = LoggerFactory.getLogger(Marina.class);
 
     @Getter private final Jongo datastore;
-    @Getter private final MongoCollection usersCollection;
     @Getter private final JDA jda;
     @Getter private final Map<Class<? extends AbstractFeature>, AbstractFeature> features = new HashMap<>();
 
@@ -33,7 +32,6 @@ public class Marina {
         Marina.instance = this;
 
         this.datastore = new Jongo(new MongoClient("mongo:27017").getDB("marina"));
-        this.usersCollection = this.datastore.getCollection("users");
 
         this.jda = JDABuilder.createDefault(System.getenv("TOKEN"))
                 .setActivity(

@@ -3,7 +3,7 @@ package me.scarsz.marina.feature;
 import lombok.SneakyThrows;
 import me.scarsz.marina.Command;
 import me.scarsz.marina.Marina;
-import me.scarsz.marina.Permissions;
+import me.scarsz.marina.feature.permissions.Permissions;
 import me.scarsz.marina.exception.InsufficientPermissionException;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.ISnowflake;
