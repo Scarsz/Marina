@@ -59,6 +59,7 @@ public class Marina {
         new DevelopmentFeature();
         new DockerFeature();
 //        new TagsFeature();
+//        new StatisticsFeature();
     }
 
     public static <F extends AbstractFeature> F getFeature(Class<F> clazz) {
