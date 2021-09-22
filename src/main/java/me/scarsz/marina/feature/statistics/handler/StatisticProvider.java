@@ -4,7 +4,7 @@ import java.util.Map;
 
 public interface StatisticProvider {
 
-    String compute(Map<String, Object> data);
-    String format(Map<String, Object> data);
+    Object compute(Map<String, Object> data) throws Exception;
+    String format(Map<String, Object> data) throws Exception;
 
 }
