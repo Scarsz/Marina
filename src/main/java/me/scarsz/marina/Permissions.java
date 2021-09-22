@@ -30,13 +30,18 @@ public class Permissions extends AbstractFeature {
                         .addOption(OptionType.USER, "user", "Target user", true)
                         .addOption(OptionType.STRING, "permission", "Permission to remove", true)
                 )
+                .addSubcommands(new SubcommandData("list", "List granted permissions for the specified user")
+                        .addOption(OptionType.USER, "user", "Target user", true)
+                )
+                .addSubcommands(new SubcommandData("test", "Test a permission check on a user")
+                        .addOption(OptionType.USER, "user", "Target user", true)
+                        .addOption(OptionType.STRING, "permission", "Permission to check", true)
+                )
                 .queue();
     }
 
     @Command(value = "grant", permission = "admin")
-    public void grantCommand(SlashCommandEvent event) throws InsufficientPermissionException {
-        checkPermission(event.getUser(), "admin");
-
+    public void grantCommand(SlashCommandEvent event) {
         User targetUser = event.getOption("user").getAsUser();
         String permission = event.getOption("permission").getAsString();
 
@@ -49,9 +54,7 @@ public class Permissions extends AbstractFeature {
         event.getHook().editOriginal("✅ Added permission `" + permission + "` to " + targetUser.getAsMention()).complete();
     }
     @Command(value = "remove", permission = "admin")
-    public void removeCommand(SlashCommandEvent event) throws InsufficientPermissionException {
-        checkPermission(event.getUser(), "admin");
-
+    public void removeCommand(SlashCommandEvent event) {
         User targetUser = event.getOption("user").getAsUser();
         String permission = event.getOption("permission").getAsString();
 
@@ -65,6 +68,29 @@ public class Permissions extends AbstractFeature {
         DiscordUser.upsertBySnowflake(targetUser).with(user);
 
         event.getHook().editOriginal("✅ Removed permission `" + permission + "` from " + targetUser.getAsMention()).complete();
+    }
+    @Command(value = "list", permission = "admin")
+    public void listCommand(SlashCommandEvent event) {
+        User targetUser = event.getOption("user").getAsUser();
+
+        DiscordUser discordUser = DiscordUser.findBySnowflake(targetUser);
+        if (discordUser != null) {
+            event.getHook().editOriginal(String.format(
+                    "✅ %s's permissions: ```\n%s\n```",
+                    targetUser.getAsMention(),
+                    String.join("\n", discordUser.getPermissions())
+            )).complete();
+        } else {
+            event.getHook().editOriginal("❌ " + targetUser.getAsMention() + " has no granted permissions`").complete();
+        }
+    }
+    @Command(value = "test", permission = "admin")
+    public void testCommand(SlashCommandEvent event) {
+        User targetUser = event.getOption("user").getAsUser();
+        String permission = event.getOption("permission").getAsString();
+
+        boolean value = hasPermission(targetUser, permission);
+        event.getHook().editOriginal(targetUser.getAsMention() + "'s value for `" + permission + "`: " + (value ? "✅" : "❌")).complete();
     }
 
     public boolean hasPermission(DiscordUser user, String permission) {
