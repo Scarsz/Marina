@@ -51,11 +51,13 @@ public class TagsFeature extends AbstractFeature {
             event.getHook().editOriginal("❌ A tag doesn't exist by the name `" + tagName + "`").queue();
         }
     }
-    @Command(name = "list")
+
+    @Command(name = "tag.list")
     public void listTagsCommand(SlashCommandEvent event) {
         String search = event.getOption("search").getAsString();
     }
-    @Command(name = "edit", permission = "tags")
+
+    @Command(name = "tag.edit", permission = "tags")
     public void editTagCommand(SlashCommandEvent event) {
         String tagName = event.getOption("tag").getAsString();
         Tag tag = Tag.findByName(tagName);
@@ -66,7 +68,8 @@ public class TagsFeature extends AbstractFeature {
 
         }
     }
-    @Command(name = "delete", permission = "tags")
+
+    @Command(name = "tag.delete", permission = "tags")
     public void deleteTagCommand(SlashCommandEvent event) {
         String tagName = event.getOption("tag").getAsString();
         Tag tag = Tag.findByName(tagName);

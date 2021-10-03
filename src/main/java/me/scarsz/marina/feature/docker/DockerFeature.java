@@ -52,7 +52,7 @@ public class DockerFeature extends AbstractFeature {
                 .queue();
     }
 
-    @Command(name = "list")
+    @Command(name = "container.list")
     public void listCommand(SlashCommandEvent event) {
         OptionMapping nameOption = event.getOption("name");
         Set<String> containers = listContainers(nameOption != null ? nameOption.getAsString() : null, event.getUser()).stream()
@@ -65,7 +65,7 @@ public class DockerFeature extends AbstractFeature {
             event.getHook().editOriginal("❌ You don't have access to any containers.").queue();
         }
     }
-    @Command(name = "restart")
+    @Command(name = "container.restart")
     public void restartCommand(SlashCommandEvent event) throws IllegalArgumentException, InsufficientPermissionException {
         OptionMapping containerOption = event.getOption("container");
         if (containerOption != null) {
@@ -92,7 +92,7 @@ public class DockerFeature extends AbstractFeature {
             )).queue();
         }
     }
-    @Command(name = "update")
+    @Command(name = "container.update")
     public void updateCommand(SlashCommandEvent event) throws IllegalArgumentException, InsufficientPermissionException {
         String container = event.getOption("container").getAsString(); //TODO allow null container & selections
         checkPermission(event.getUser(), "docker.container." + container.replace("-", ".") + ".update");

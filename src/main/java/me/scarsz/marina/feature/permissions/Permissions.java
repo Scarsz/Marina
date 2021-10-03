@@ -55,7 +55,7 @@ public class Permissions extends AbstractFeature {
                 .queue();
     }
 
-    @Command(name = "grant", permission = "admin")
+    @Command(name = "permission.grant", permission = "admin")
     public void grantCommand(SlashCommandEvent event) {
         User targetUser = event.getOption("user").getAsUser();
         String permission = event.getOption("permission").getAsString();
@@ -68,7 +68,7 @@ public class Permissions extends AbstractFeature {
 
         event.getHook().editOriginal("✅ Added permission `" + permission + "` to " + targetUser.getAsMention()).complete();
     }
-    @Command(name = "remove", permission = "admin")
+    @Command(name = "permission.remove", permission = "admin")
     public void removeCommand(SlashCommandEvent event) {
         User targetUser = event.getOption("user").getAsUser();
         String permission = event.getOption("permission").getAsString();
@@ -84,7 +84,7 @@ public class Permissions extends AbstractFeature {
 
         event.getHook().editOriginal("✅ Removed permission `" + permission + "` from " + targetUser.getAsMention()).complete();
     }
-    @Command(name = "list", permission = "admin")
+    @Command(name = "permission.list", permission = "admin")
     public void listCommand(SlashCommandEvent event) {
         User targetUser = event.getOption("user").getAsUser();
 
@@ -99,7 +99,7 @@ public class Permissions extends AbstractFeature {
             event.getHook().editOriginal("❌ " + targetUser.getAsMention() + " has no granted permissions").complete();
         }
     }
-    @Command(name = "test", permission = "admin")
+    @Command(name = "permission.test", permission = "admin")
     public void testCommand(SlashCommandEvent event) {
         User targetUser = event.getOption("user").getAsUser();
         String permission = event.getOption("permission").getAsString();

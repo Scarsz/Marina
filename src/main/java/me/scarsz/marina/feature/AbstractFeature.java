@@ -13,6 +13,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.StringJoiner;
 
 public abstract class AbstractFeature extends ListenerAdapter implements Feature {
 
@@ -24,7 +25,11 @@ public abstract class AbstractFeature extends ListenerAdapter implements Feature
     @Override
     @SneakyThrows
     public void onSlashCommand(@NotNull SlashCommandEvent event) {
-        String target = event.getSubcommandName() != null ? event.getSubcommandName() : event.getName();
+        StringJoiner targetBuilder = new StringJoiner(".");
+        targetBuilder.add(event.getName());
+        if (event.getSubcommandGroup() != null) targetBuilder.add(event.getSubcommandGroup());
+        if (event.getSubcommandName() != null) targetBuilder.add(event.getSubcommandName());
+        String target = targetBuilder.toString();
 
         for (Method method : getClass().getDeclaredMethods()) {
             Command command = method.getAnnotation(Command.class);

@@ -14,7 +14,7 @@ public class DevelopmentFeature extends AbstractFeature {
                 .queue();
     }
 
-    @Command(name = "rejoin", permission = "dev")
+    @Command(name = "dev.rejoin", permission = "dev")
     public void rejoinCommand(SlashCommandEvent event) throws IllegalArgumentException {
         event.getHook()
                 .setEphemeral(true)
