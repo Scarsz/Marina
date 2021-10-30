@@ -15,6 +15,7 @@ import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.events.message.guild.GuildMessageDeleteEvent;
 import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent;
 import net.dv8tion.jda.api.interactions.components.Button;
+import net.dv8tion.jda.api.interactions.components.Component;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
@@ -23,7 +24,10 @@ import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.parser.ParserException;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
@@ -116,15 +120,19 @@ public class PasteFeature extends AbstractFeature {
 
     private void processAttachment(Message message, Message.Attachment attachment) {
         File file = getFile(message.getChannel().getId(), message.getId(), attachment.getFileName());
+        String extension = FilenameUtils.getExtension(file.getName()).toLowerCase(Locale.ROOT);
+        boolean parseable = extension.equals("yml") || extension.equals("yaml") || extension.equals("json");
+
+        String baseUrl = Marina.getFeature(HttpFeature.class).getBaseUrl() + "/paste/" + message.getChannel().getId() + "/" + message.getId();
+        List<Component> components = new LinkedList<>();
+        components.add(Button.link(baseUrl + "/raw/" + attachment.getFileName(), "View file"));
+        components.add(Button.link(baseUrl + "/lines/" + attachment.getFileName(), "With line numbers"));
+        if (parseable) components.add(Button.link(baseUrl + "/parsed/" + attachment.getFileName(), "Parsed"));
+
         attachment.downloadToFile(file)
                 .thenAccept(f -> {
-                    String baseUrl = Marina.getFeature(HttpFeature.class).getBaseUrl() + "/paste/" + message.getChannel().getId() + "/" + message.getId();
                     message.reply("Paste version of `" + attachment.getFileName() + "` from " + message.getAuthor().getAsMention())
-                            .setActionRow(
-                                    Button.link(baseUrl + "/raw/" + attachment.getFileName(), "View file"),
-                                    Button.link(baseUrl + "/lines/" + attachment.getFileName(), "With line numbers"),
-                                    Button.link(baseUrl + "/parsed/" + attachment.getFileName(), "Parsed")
-                            )
+                            .setActionRow(components)
                             .allowedMentions(EnumSet.noneOf(Message.MentionType.class))
                             .mentionRepliedUser(false)
                             .queue();
