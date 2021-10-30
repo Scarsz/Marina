@@ -6,6 +6,8 @@ import me.scarsz.jdaappender.ChannelLoggingHandler;
 import me.scarsz.marina.feature.AbstractFeature;
 import me.scarsz.marina.feature.DevelopmentFeature;
 import me.scarsz.marina.feature.docker.DockerFeature;
+import me.scarsz.marina.feature.http.HttpFeature;
+import me.scarsz.marina.feature.paste.PasteFeature;
 import me.scarsz.marina.feature.permissions.Permissions;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
@@ -16,6 +18,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.security.auth.login.LoginException;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -57,7 +60,9 @@ public class Marina {
         // features
         new Permissions();
         new DevelopmentFeature();
+        new HttpFeature();
         new DockerFeature();
+        try { new PasteFeature(); } catch (IOException e) { e.printStackTrace(); }
 //        new TagsFeature();
 //        new StatisticsFeature();
     }

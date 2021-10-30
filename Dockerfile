@@ -8,4 +8,5 @@ RUN mvn -B clean package
 FROM openjdk:11
 WORKDIR /bot
 COPY --from=build /build/target/Marina.jar /bot
+EXPOSE 34117/tcp
 CMD ["java", "-jar", "Marina.jar"]
