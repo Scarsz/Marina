@@ -34,7 +34,6 @@ public class PasteFeature extends AbstractFeature {
 
     private final File fileContainer = new File("pastes");
     private final Yaml yaml = new Yaml(new DumperOptions() {{
-        setIndent(4);
         setPrettyFlow(true);
     }});
     private final Gson gson = new GsonBuilder().setPrettyPrinting().create();
@@ -49,26 +48,26 @@ public class PasteFeature extends AbstractFeature {
         }
 
         Marina.getFeature(HttpFeature.class).getApp().routes(() -> {
-            path("paste/{guild}/{channel}/{message}/{index}", () -> {
-                get(ctx -> viewPaste(ctx, false));
-                get("lines", ctx -> viewPaste(ctx, true));
-                get("parsed", this::viewPasteParsed);
+            path("paste/{channel}/{message}", () -> {
+                get("raw/{file}", ctx -> viewPaste(ctx, false));
+                get("lines/{file}", ctx -> viewPaste(ctx, true));
+                get("parsed/{file}", this::viewPasteParsed);
             });
         });
     }
 
-    private void viewPaste(Context ctx, boolean lines) throws IOException {
-        String guild = ctx.pathParam("guild");
-        String channel = ctx.pathParam("guild");
-        String message = ctx.pathParam("guild");
-        String index = ctx.pathParam("index");
-        File file = getFile(guild, channel, message, index);
+    private void viewPaste(Context ctx, boolean lines) {
+        String channel = ctx.pathParam("channel");
+        String message = ctx.pathParam("message");
+        String fileName = ctx.pathParam("file");
+        File file = getFile(channel, message, fileName);
+        if (!file.exists()) throw new NotFoundResponse();
 
         StringJoiner joiner = new StringJoiner("\n");
         try (FileReader fileReader = new FileReader(file)) {
             try (BufferedReader reader = new BufferedReader(fileReader)) {
-                int lineCounter = 0;
                 String line;
+                int lineCounter = 0;
                 while ((line = reader.readLine()) != null) {
                     joiner.add((lines ? "[" + ++lineCounter + "] " : "") + line);
                 }
@@ -80,11 +79,11 @@ public class PasteFeature extends AbstractFeature {
         ctx.result(joiner.toString());
     }
     private void viewPasteParsed(Context ctx) throws IOException {
-        String guild = ctx.pathParam("guild");
-        String channel = ctx.pathParam("guild");
-        String message = ctx.pathParam("guild");
-        String index = ctx.pathParam("index");
-        File file = getFile(guild, channel, message, index);
+        String channel = ctx.pathParam("channel");
+        String message = ctx.pathParam("message");
+        String fileName = ctx.pathParam("file");
+        File file = getFile(channel, message, fileName);
+        if (!file.exists()) throw new NotFoundResponse();
 
         String result;
         switch (FilenameUtils.getExtension(file.getName()).toLowerCase(Locale.ROOT)) {
@@ -99,8 +98,6 @@ public class PasteFeature extends AbstractFeature {
                     joiner.add("Problem: " + e.getProblem());
                     joiner.add("Context: " + e.getContext());
                     result = joiner.toString();
-                } catch (FileNotFoundException e) {
-                    throw new NotFoundResponse("Paste file not found");
                 }
                 break;
             case "json":
@@ -108,8 +105,6 @@ public class PasteFeature extends AbstractFeature {
                     result = gson.toJson(JsonParser.parseReader(reader));
                 } catch (JsonSyntaxException e) {
                     result = "Parsing exception: " + e;
-                } catch (FileNotFoundException e) {
-                    throw new NotFoundResponse("Paste file not found");
                 }
                 break;
             default:
@@ -119,16 +114,16 @@ public class PasteFeature extends AbstractFeature {
         ctx.result(result);
     }
 
-    private void processAttachment(Message message, Message.Attachment attachment, int index) throws IOException {
-        File file = create(message.getGuild().getId(), message.getChannel().getId(), message.getId(), String.valueOf(index));
+    private void processAttachment(Message message, Message.Attachment attachment) {
+        File file = getFile(message.getChannel().getId(), message.getId(), attachment.getFileName());
         attachment.downloadToFile(file)
                 .thenAccept(f -> {
-                    String baseUrl = Marina.getFeature(HttpFeature.class).getBaseUrl() + "/paste/" + message.getGuild().getId() + "/" + message.getChannel().getId() + "/" + message.getId() + "-" + index;
+                    String baseUrl = Marina.getFeature(HttpFeature.class).getBaseUrl() + "/paste/" + message.getChannel().getId() + "/" + message.getId();
                     message.reply("Paste version of `" + attachment.getFileName() + "` from " + message.getAuthor().getAsMention())
                             .setActionRow(
-                                    Button.link(baseUrl, "View file"),
-                                    Button.link(baseUrl + "/lines", "With line numbers"),
-                                    Button.link(baseUrl + "/parsed", "Parsed")
+                                    Button.link(baseUrl + "/raw/" + attachment.getFileName(), "View file"),
+                                    Button.link(baseUrl + "/lines/" + attachment.getFileName(), "With line numbers"),
+                                    Button.link(baseUrl + "/parsed/" + attachment.getFileName(), "Parsed")
                             )
                             .allowedMentions(EnumSet.noneOf(Message.MentionType.class))
                             .mentionRepliedUser(false)
@@ -140,9 +135,8 @@ public class PasteFeature extends AbstractFeature {
     @Override
     @SneakyThrows
     public void onGuildMessageReceived(@NotNull GuildMessageReceivedEvent event) {
-        int i = 0;
         for (Message.Attachment attachment : event.getMessage().getAttachments()) {
-            processAttachment(event.getMessage(), attachment, ++i);
+            processAttachment(event.getMessage(), attachment);
         }
     }
 
@@ -174,7 +168,10 @@ public class PasteFeature extends AbstractFeature {
         }
     }
 
-    private Collection<File> getFiles(String guild, String channel, String message) {
+    private @NotNull File getFile(String channel, String message, String fileName) {
+        return new File(fileContainer, channel + "-" + message + "-" + fileName);
+    }
+    private @NotNull Collection<File> getFiles(String guild, String channel, String message) {
         File fileFolder = new File(fileContainer, guild + "/" + channel);
         if (fileFolder.exists()) {
             return FileUtils.listFiles(
@@ -184,19 +181,6 @@ public class PasteFeature extends AbstractFeature {
         } else {
             return Collections.emptySet();
         }
-    }
-    private File getFile(String guild, String channel, String message, String index) throws IOException {
-        File fileFolder = new File(fileContainer, guild + "/" + channel);
-        if (!fileFolder.exists() && !fileFolder.mkdirs()) throw new IOException("Failed to create directory " + fileFolder.getName());
-        return FileUtils.listFiles(
-                fileFolder,
-                new WildcardFileFilter(message + "-" + index + ".*"), null
-        ).stream().findFirst().orElse(null);
-    }
-    private File create(String guild, String channel, String message, String index) throws IOException {
-        File fileFolder = new File(fileContainer, guild + "/" + channel);
-        if (!fileFolder.exists() && !fileFolder.mkdirs()) throw new IOException("Failed to create directory " + fileFolder.getName());
-        return new File(fileFolder, message + "-" + index + ".*");
     }
 
 }

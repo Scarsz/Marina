@@ -12,7 +12,9 @@ services:
       - GITHUB_CLIENT=${GITHUB_CLIENT}
       - GITHUB_SECRET=${GITHUB_SECRET}
       - DOCKER_USER=${DOCKER_USER:-root}
+      - HTTP_URL=${HTTP_URL}
     volumes:
+      - pastes:/bot/pastes
       - /var/run/docker.sock:/var/run/docker.sock
     restart: always
 
