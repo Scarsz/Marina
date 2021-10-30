@@ -57,7 +57,7 @@ public class PasteFeature extends AbstractFeature {
         });
     }
 
-    private void viewPaste(Context ctx, boolean lines) {
+    private void viewPaste(Context ctx, boolean lines) throws IOException {
         String guild = ctx.pathParam("guild");
         String channel = ctx.pathParam("guild");
         String message = ctx.pathParam("guild");
@@ -185,8 +185,9 @@ public class PasteFeature extends AbstractFeature {
             return Collections.emptySet();
         }
     }
-    private File getFile(String guild, String channel, String message, String index) {
+    private File getFile(String guild, String channel, String message, String index) throws IOException {
         File fileFolder = new File(fileContainer, guild + "/" + channel);
+        if (!fileFolder.exists() && !fileFolder.mkdirs()) throw new IOException("Failed to create directory " + fileFolder.getName());
         return FileUtils.listFiles(
                 fileFolder,
                 new WildcardFileFilter(message + "-" + index + ".*"), null
