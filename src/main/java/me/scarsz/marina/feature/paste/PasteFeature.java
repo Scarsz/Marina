@@ -22,7 +22,8 @@ import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.jetbrains.annotations.NotNull;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
-import org.yaml.snakeyaml.parser.ParserException;
+import org.yaml.snakeyaml.error.MarkedYAMLException;
+import org.yaml.snakeyaml.error.YAMLException;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -95,12 +96,14 @@ public class PasteFeature extends AbstractFeature {
             case "yaml":
                 try (FileReader reader = new FileReader(file)) {
                     result = yaml.dumpAsMap(yaml.load(reader));
-                } catch (ParserException e) {
+                } catch (YAMLException e) {
                     StringJoiner joiner = new StringJoiner("\n");
                     joiner.add("Parsing exception: " + e.getMessage());
-                    joiner.add("");
-                    joiner.add("Problem: " + e.getProblem());
-                    joiner.add("Context: " + e.getContext());
+                    if (e instanceof MarkedYAMLException e2) {
+                        joiner.add("");
+                        joiner.add("Problem: " + e2.getProblem());
+                        joiner.add("Context: " + e2.getContext());
+                    }
                     result = joiner.toString();
                 }
                 break;
