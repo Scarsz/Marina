@@ -97,14 +97,7 @@ public class PasteFeature extends AbstractFeature {
                 try (FileReader reader = new FileReader(file)) {
                     result = yaml.dumpAsMap(yaml.load(reader));
                 } catch (YAMLException e) {
-                    StringJoiner joiner = new StringJoiner("\n");
-                    joiner.add("Parsing exception: " + e.getMessage());
-                    if (e instanceof MarkedYAMLException e2) {
-                        joiner.add("");
-                        joiner.add("Problem: " + e2.getProblem());
-                        joiner.add("Context: " + e2.getContext());
-                    }
-                    result = joiner.toString();
+                    result = "Parsing exception: " + e.getMessage();
                 }
                 break;
             case "json":
