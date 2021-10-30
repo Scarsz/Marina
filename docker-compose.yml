@@ -14,7 +14,7 @@ services:
       - DOCKER_USER=${DOCKER_USER:-root}
       - HTTP_URL=${HTTP_URL}
     volumes:
-      - pastes:/bot/pastes
+      - ./pastes:/bot/pastes
       - /var/run/docker.sock:/var/run/docker.sock
     restart: always
 
