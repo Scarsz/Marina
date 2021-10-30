@@ -7,6 +7,7 @@ import com.google.gson.JsonSyntaxException;
 import io.javalin.http.BadRequestResponse;
 import io.javalin.http.Context;
 import io.javalin.http.NotFoundResponse;
+import lombok.SneakyThrows;
 import me.scarsz.marina.Marina;
 import me.scarsz.marina.feature.AbstractFeature;
 import me.scarsz.marina.feature.http.HttpFeature;
@@ -23,10 +24,7 @@ import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.parser.ParserException;
 
 import java.io.*;
-import java.util.Collection;
-import java.util.EnumSet;
-import java.util.Locale;
-import java.util.StringJoiner;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 import static io.javalin.apibuilder.ApiBuilder.get;
@@ -121,8 +119,8 @@ public class PasteFeature extends AbstractFeature {
         ctx.result(result);
     }
 
-    private void processAttachment(Message message, Message.Attachment attachment, int index) {
-        File file = getFile(message.getGuild().getId(), message.getChannel().getId(), message.getId(), String.valueOf(index));
+    private void processAttachment(Message message, Message.Attachment attachment, int index) throws IOException {
+        File file = create(message.getGuild().getId(), message.getChannel().getId(), message.getId(), String.valueOf(index));
         attachment.downloadToFile(file)
                 .thenAccept(f -> {
                     String baseUrl = Marina.getFeature(HttpFeature.class).getBaseUrl() + "/paste/" + message.getGuild().getId() + "/" + message.getChannel().getId() + "/" + message.getId() + "-" + index;
@@ -140,6 +138,7 @@ public class PasteFeature extends AbstractFeature {
     }
 
     @Override
+    @SneakyThrows
     public void onGuildMessageReceived(@NotNull GuildMessageReceivedEvent event) {
         int i = 0;
         for (Message.Attachment attachment : event.getMessage().getAttachments()) {
@@ -176,16 +175,27 @@ public class PasteFeature extends AbstractFeature {
     }
 
     private Collection<File> getFiles(String guild, String channel, String message) {
-        return FileUtils.listFiles(
-                new File(fileContainer, guild + "/" + channel),
-                new WildcardFileFilter(message + "-*"), null
-        );
+        File fileFolder = new File(fileContainer, guild + "/" + channel);
+        if (fileFolder.exists()) {
+            return FileUtils.listFiles(
+                    fileFolder,
+                    new WildcardFileFilter(message + "-*"), null
+            );
+        } else {
+            return Collections.emptySet();
+        }
     }
     private File getFile(String guild, String channel, String message, String index) {
+        File fileFolder = new File(fileContainer, guild + "/" + channel);
         return FileUtils.listFiles(
-                new File(fileContainer, guild + "/" + channel),
+                fileFolder,
                 new WildcardFileFilter(message + "-" + index + ".*"), null
         ).stream().findFirst().orElse(null);
+    }
+    private File create(String guild, String channel, String message, String index) throws IOException {
+        File fileFolder = new File(fileContainer, guild + "/" + channel);
+        if (!fileFolder.exists() && !fileFolder.mkdirs()) throw new IOException("Failed to create directory " + fileFolder.getName());
+        return new File(fileFolder, message + "-" + index + ".*");
     }
 
 }
