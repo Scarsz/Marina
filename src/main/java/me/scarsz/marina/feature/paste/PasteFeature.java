@@ -1,11 +1,9 @@
 package me.scarsz.marina.feature.paste;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
 import io.javalin.http.BadRequestResponse;
 import io.javalin.http.Context;
+import io.javalin.http.InternalServerErrorResponse;
 import io.javalin.http.NotFoundResponse;
 import lombok.SneakyThrows;
 import me.scarsz.marina.Marina;
@@ -20,8 +18,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.jetbrains.annotations.NotNull;
-import org.yaml.snakeyaml.DumperOptions;
-import org.yaml.snakeyaml.Yaml;
+import org.jetbrains.annotations.Nullable;
 import org.yaml.snakeyaml.error.YAMLException;
 
 import java.io.BufferedReader;
@@ -36,26 +33,23 @@ import static io.javalin.apibuilder.ApiBuilder.path;
 
 public class PasteFeature extends AbstractFeature {
 
-    private final File fileContainer = new File("pastes");
-    private final Yaml yaml = new Yaml(new DumperOptions() {{
-        setPrettyFlow(true);
-    }});
-    private final Gson gson = new GsonBuilder().setPrettyPrinting().create();
+    private static final String URL_TEMPLATE = Marina.getFeature(HttpFeature.class).getBaseUrl() + "/paste/{type}/{channel}/{message}/{file}";
+    private static final File FILE_CONTAINER = new File("pastes");
 
     public PasteFeature() throws IOException {
         super();
 
-        if (!fileContainer.exists()) {
-            if (!fileContainer.mkdir()) {
-                throw new IOException("Failed to create pastes file directory " + fileContainer.getPath());
+        if (!FILE_CONTAINER.exists()) {
+            if (!FILE_CONTAINER.mkdir()) {
+                throw new IOException("Failed to create pastes file directory " + FILE_CONTAINER.getPath());
             }
         }
 
         Marina.getFeature(HttpFeature.class).getApp().routes(() -> {
-            path("paste/{channel}/{message}", () -> {
-                get("raw/{file}", ctx -> viewPaste(ctx, false));
-                get("lines/{file}", ctx -> viewPaste(ctx, true));
-                get("parsed/{file}", this::viewPasteParsed);
+            path("paste", () -> {
+                get("raw/{channel}/{message}/{file}", ctx -> viewPaste(ctx, false));
+                get("lines/{channel}/{message}/{file}", ctx -> viewPaste(ctx, true));
+                get("parsed/{channel}/{message}/{file}", this::viewPasteParsed);
             });
         });
     }
@@ -82,50 +76,61 @@ public class PasteFeature extends AbstractFeature {
 
         ctx.result(joiner.toString());
     }
-    private void viewPasteParsed(Context ctx) throws IOException {
+    private void viewPasteParsed(Context ctx) {
         String channel = ctx.pathParam("channel");
         String message = ctx.pathParam("message");
         String fileName = ctx.pathParam("file");
         File file = getFile(channel, message, fileName);
         if (!file.exists()) throw new NotFoundResponse();
+        SchemaType schema = getSchemaType(file.getName());
+        if (schema == null) throw new BadRequestResponse("Requested file is not parseable");
 
         String result;
-        switch (FilenameUtils.getExtension(file.getName()).toLowerCase(Locale.ROOT)) {
-            case "yml":
-            case "yaml":
-                try (FileReader reader = new FileReader(file)) {
-                    result = yaml.dumpAsMap(yaml.load(reader));
-                } catch (YAMLException e) {
-                    result = "Parsing exception: " + e.getMessage();
-                }
-                break;
-            case "json":
-                try (FileReader reader = new FileReader(file)) {
-                    result = gson.toJson(JsonParser.parseReader(reader));
-                } catch (JsonSyntaxException e) {
-                    result = "Parsing exception: " + e;
-                }
-                break;
-            default:
-                throw new BadRequestResponse("Requested file is not parseable");
+        try {
+            result = schema.dump(schema.parse(FileUtils.readFileToString(file, "UTF-8")));
+        } catch (JsonSyntaxException e) {
+            result = "Parsing exception: " + e;
+        } catch (YAMLException e) {
+            result = "Parsing exception: " + e.getMessage();
+        } catch (IOException e) {
+            throw new InternalServerErrorResponse(e.getMessage());
         }
-
         ctx.result(result);
     }
 
-    private void processAttachment(Message message, Message.Attachment attachment) {
+    private void handleAttachmentPaste(Message message, Message.Attachment attachment) {
         File file = getFile(message.getChannel().getId(), message.getId(), attachment.getFileName());
-        String extension = FilenameUtils.getExtension(file.getName()).toLowerCase(Locale.ROOT);
-        boolean parseable = extension.equals("yml") || extension.equals("yaml") || extension.equals("json");
+        SchemaType schema = getSchemaType(file.getName());
 
-        String baseUrl = Marina.getFeature(HttpFeature.class).getBaseUrl() + "/paste/" + message.getChannel().getId() + "/" + message.getId();
+        String url = URL_TEMPLATE
+                .replace("{channel}", message.getChannel().getId())
+                .replace("{message}", message.getId())
+                .replace("{file}", file.getName());
+
         List<Component> components = new LinkedList<>();
-        components.add(Button.link(baseUrl + "/raw/" + attachment.getFileName(), "View file"));
-        components.add(Button.link(baseUrl + "/lines/" + attachment.getFileName(), "With line numbers"));
-        if (parseable) components.add(Button.link(baseUrl + "/parsed/" + attachment.getFileName(), "Parsed"));
+        components.add(Button.link(url.replace("{type}", "raw"), "View file"));
+        components.add(Button.link(url.replace("{type}", "lines"), "With line numbers"));
+        if (schema != null) components.add(Button.link(url.replace("{type}", "parsed"), "Parsed"));
 
         attachment.downloadToFile(file)
                 .thenAccept(f -> {
+                    if (schema != null) {
+                        String parseException = null;
+                        try {
+                            schema.parse(FileUtils.readFileToString(file, "UTF-8"));
+                        } catch (JsonSyntaxException e) {
+                            parseException = "Parsing exception: " + e;
+                        } catch (YAMLException e) {
+                            parseException = "Parsing exception: " + e.getMessage();
+                        } catch (IOException e) {
+                            throw new InternalServerErrorResponse(e.getMessage());
+                        }
+
+                        if (parseException != null) {
+                            message.reply("❌ Parsing exception:\n```" + parseException + "\n```").queue();
+                        }
+                    }
+
                     message.reply("Paste version of `" + attachment.getFileName() + "` from " + message.getAuthor().getAsMention())
                             .setActionRow(components)
                             .allowedMentions(EnumSet.noneOf(Message.MentionType.class))
@@ -139,7 +144,7 @@ public class PasteFeature extends AbstractFeature {
     @SneakyThrows
     public void onGuildMessageReceived(@NotNull GuildMessageReceivedEvent event) {
         for (Message.Attachment attachment : event.getMessage().getAttachments()) {
-            processAttachment(event.getMessage(), attachment);
+            handleAttachmentPaste(event.getMessage(), attachment);
         }
     }
 
@@ -172,10 +177,10 @@ public class PasteFeature extends AbstractFeature {
     }
 
     private @NotNull File getFile(String channel, String message, String fileName) {
-        return new File(fileContainer, channel + "-" + message + "-" + fileName);
+        return new File(FILE_CONTAINER, channel + "-" + message + "-" + fileName);
     }
     private @NotNull Collection<File> getFiles(String guild, String channel, String message) {
-        File fileFolder = new File(fileContainer, guild + "/" + channel);
+        File fileFolder = new File(FILE_CONTAINER, guild + "/" + channel);
         if (fileFolder.exists()) {
             return FileUtils.listFiles(
                     fileFolder,
@@ -184,6 +189,15 @@ public class PasteFeature extends AbstractFeature {
         } else {
             return Collections.emptySet();
         }
+    }
+
+    private static @Nullable SchemaType getSchemaType(String fileName) {
+        String extension = FilenameUtils.getExtension(fileName).toLowerCase(Locale.ROOT);
+        return extension.equals("yml") || extension.equals("yaml")
+                ? SchemaType.YAML
+                : extension.equals("json")
+                        ? SchemaType.JSON
+                        : null;
     }
 
 }
