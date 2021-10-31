@@ -116,7 +116,7 @@ public class PasteFeature extends AbstractFeature {
         String url = URL_TEMPLATE
                 .replace("{channel}", message.getChannel().getId())
                 .replace("{message}", message.getId())
-                .replace("{file}", file.getName());
+                .replace("{file}", attachment.getFileName());
 
         List<Component> components = new LinkedList<>();
         components.add(Button.link(url.replace("{type}", "raw"), "View file"));
