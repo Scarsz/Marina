@@ -138,7 +138,7 @@ public class PasteFeature extends AbstractFeature {
                         }
 
                         if (parseException != null) {
-                            message.reply("❌ Parsing exception:\n```" + parseException + "\n```").queue();
+                            message.reply("```" + parseException + "\n```").queue();
                         }
                     }
 
