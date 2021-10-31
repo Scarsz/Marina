@@ -35,6 +35,7 @@ public class PasteFeature extends AbstractFeature {
 
     private static final String URL_TEMPLATE = Marina.getFeature(HttpFeature.class).getBaseUrl() + "/paste/{type}/{channel}/{message}/{file}";
     private static final File FILE_CONTAINER = new File("pastes");
+    private static final List<String> TEXT_FILE_EXTENSIONS = Arrays.asList("txt", "log", "yml", "yaml", "json", "properties");
 
     public PasteFeature() throws IOException {
         super();
@@ -98,6 +99,16 @@ public class PasteFeature extends AbstractFeature {
         ctx.result(result);
     }
 
+    @Override
+    @SneakyThrows
+    public void onGuildMessageReceived(@NotNull GuildMessageReceivedEvent event) {
+        for (Message.Attachment attachment : event.getMessage().getAttachments()) {
+            if (TEXT_FILE_EXTENSIONS.contains(FilenameUtils.getExtension(attachment.getFileName()).toLowerCase(Locale.ROOT))) {
+                handleAttachmentPaste(event.getMessage(), attachment);
+            }
+        }
+    }
+
     private void handleAttachmentPaste(Message message, Message.Attachment attachment) {
         File file = getFile(message.getChannel().getId(), message.getId(), attachment.getFileName());
         SchemaType schema = getSchemaType(file.getName());
@@ -138,14 +149,6 @@ public class PasteFeature extends AbstractFeature {
                             .queue();
                 })
                 .orTimeout(5, TimeUnit.SECONDS);
-    }
-
-    @Override
-    @SneakyThrows
-    public void onGuildMessageReceived(@NotNull GuildMessageReceivedEvent event) {
-        for (Message.Attachment attachment : event.getMessage().getAttachments()) {
-            handleAttachmentPaste(event.getMessage(), attachment);
-        }
     }
 
     @Override
