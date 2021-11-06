@@ -32,3 +32,4 @@ services:
     container_name: mongo
     volumes:
       - ./data/mongo:/data/db
+    restart: always
