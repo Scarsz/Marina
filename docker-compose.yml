@@ -13,6 +13,8 @@ services:
       - GITHUB_SECRET=${GITHUB_SECRET}
       - DOCKER_USER=${DOCKER_USER:-root}
       - HTTP_URL=${HTTP_URL}
+      - DO_NOT_MENTION_ROLE=${DO_NOT_MENTION_ROLE:-Do not mention}
+      - ALLOW_MENTIONS_IN_THANKS=${ALLOW_MENTIONS_IN_THANKS:-true}
     volumes:
       - ./pastes:/bot/pastes
       - /var/run/docker.sock:/var/run/docker.sock
