@@ -60,9 +60,12 @@ public class Permissions extends AbstractFeature {
         User targetUser = event.getOption("user").getAsUser();
         String permission = event.getOption("permission").getAsString();
 
+        Set<String> newPermissions = new HashSet<>(getPermissions(targetUser));
+        newPermissions.add(permission);
+
         DiscordEntity user = new DiscordEntity();
         user.setId(targetUser.getId());
-        user.setPermissions(Collections.singleton(permission));
+        user.setPermissions(newPermissions);
 
         DiscordEntity.upsertBySnowflake(targetUser).with(user);
 
