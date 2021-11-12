@@ -6,6 +6,7 @@ import net.dv8tion.jda.api.entities.*;
 import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent;
 import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -54,11 +55,16 @@ public class DoNotMentionFeature extends AbstractFeature {
                 && member.getRoles().contains(getDoNotMentionRole(message.getGuild()));
     }
 
-    public Role getDoNotMentionRole(Guild guild) {
-        if (StringUtils.isNumeric(System.getenv("DO_NOT_MENTION_ROLE"))) {
-            return guild.getRoleById(System.getenv("DO_NOT_MENTION_ROLE"));
+    public @Nullable Role getDoNotMentionRole(Guild guild) {
+        String roleRaw = System.getenv("DO_NOT_MENTION_ROLE");
+        if (StringUtils.isNotBlank(roleRaw)) {
+            if (StringUtils.isNumeric(roleRaw)) {
+                return guild.getRoleById(roleRaw);
+            } else {
+                return guild.getRolesByName(roleRaw, true).stream().findFirst().orElse(null);
+            }
         } else {
-            return guild.getRolesByName(System.getenv("DO_NOT_MENTION_ROLE"), true).stream().findFirst().orElse(null);
+            return null;
         }
     }
 
