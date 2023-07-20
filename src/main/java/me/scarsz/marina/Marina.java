@@ -13,6 +13,7 @@ import me.scarsz.marina.feature.permissions.Permissions;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.Activity;
+import net.dv8tion.jda.api.requests.GatewayIntent;
 import org.apache.commons.lang.StringUtils;
 import org.jongo.Jongo;
 import org.slf4j.Logger;
@@ -20,6 +21,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.security.auth.login.LoginException;
 import java.io.IOException;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -37,7 +39,11 @@ public class Marina {
 
         this.datastore = new Jongo(new MongoClient("mongo:27017").getDB("marina"));
 
-        this.jda = JDABuilder.createDefault(System.getenv("TOKEN"))
+        this.jda = JDABuilder.create(System.getenv("TOKEN"), EnumSet.complementOf(EnumSet.of(
+                GatewayIntent.GUILD_MESSAGE_TYPING,
+                GatewayIntent.DIRECT_MESSAGE_TYPING,
+                GatewayIntent.GUILD_PRESENCES
+                )))
                 .setActivity(
                         StringUtils.isNotBlank(System.getenv("WATCHING")) ?
                                 Activity.watching(System.getenv("WATCHING"))
