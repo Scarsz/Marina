@@ -12,8 +12,6 @@ import me.scarsz.marina.feature.http.HttpFeature;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.events.message.MessageDeleteEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
-import net.dv8tion.jda.api.interactions.components.ActionRow;
-import net.dv8tion.jda.api.interactions.components.Component;
 import net.dv8tion.jda.api.interactions.components.ItemComponent;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import org.apache.commons.io.FileUtils;
@@ -102,7 +100,8 @@ public class PasteFeature extends AbstractFeature {
     }
 
     @SneakyThrows
-    public void onGuildMessageReceived(@NotNull MessageReceivedEvent event) {
+    @Override
+    public void onMessageReceived(@NotNull MessageReceivedEvent event) {
         if (!event.isFromGuild()) return;
 
         for (Message.Attachment attachment : event.getMessage().getAttachments()) {
@@ -154,7 +153,8 @@ public class PasteFeature extends AbstractFeature {
                 .orTimeout(5, TimeUnit.SECONDS);
     }
 
-    public void onGuildMessageDelete(@NotNull MessageDeleteEvent event) {
+    @Override
+    public void onMessageDelete(@NotNull MessageDeleteEvent event) {
         if (!event.isFromGuild()) return;
 
         event.getChannel().getHistoryAfter(event.getMessageId(), 15).queue(history -> {

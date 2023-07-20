@@ -19,7 +19,8 @@ public class DoNotMentionFeature extends AbstractFeature {
         super();
     }
 
-    public void onGuildMessageReceived(@NotNull MessageReceivedEvent event) {
+    @Override
+    public void onMessageReceived(@NotNull MessageReceivedEvent event) {
         if (!event.isFromGuild()) return;
         Role doNotMentionRole = getDoNotMentionRole(event.getGuild());
         if (doNotMentionRole == null) return;

@@ -21,7 +21,8 @@ public abstract class AbstractFeature extends ListenerAdapter implements Feature
         Marina.getInstance().getFeatures().put(this.getClass(), this);
     }
 
-    public void onSlashCommand(@NotNull SlashCommandInteractionEvent event) {
+    @Override
+    public void onSlashCommandInteraction(@NotNull SlashCommandInteractionEvent event) {
         StringJoiner targetBuilder = new StringJoiner(".");
         targetBuilder.add(event.getName());
         if (event.getSubcommandGroup() != null) targetBuilder.add(event.getSubcommandGroup());
