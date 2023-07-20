@@ -5,7 +5,7 @@ import me.scarsz.marina.Command;
 import me.scarsz.marina.Marina;
 import me.scarsz.marina.feature.AbstractFeature;
 import net.dv8tion.jda.api.entities.User;
-import net.dv8tion.jda.api.events.interaction.SlashCommandEvent;
+import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.SubcommandData;
 import net.dv8tion.jda.api.interactions.commands.build.SubcommandGroupData;
@@ -41,7 +41,7 @@ public class StatisticsFeature extends AbstractFeature {
     }
 
     @Command(name = "statistics.create.members")
-    public void createMembersStatisticsChannelCommand(SlashCommandEvent event) {
+    public void createMembersStatisticsChannelCommand(SlashCommandInteractionEvent event) {
         String tagName = event.getOption("tag").getAsString();
         StatisticChannel tag = StatisticChannel.findByName(tagName);
         User user = event.getOption("user").getAsUser();

@@ -5,7 +5,7 @@ import me.scarsz.marina.Command;
 import me.scarsz.marina.Marina;
 import me.scarsz.marina.feature.AbstractFeature;
 import net.dv8tion.jda.api.entities.User;
-import net.dv8tion.jda.api.events.interaction.SlashCommandEvent;
+import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.SubcommandData;
 import org.jongo.MongoCollection;
@@ -40,7 +40,7 @@ public class TagsFeature extends AbstractFeature {
     }
 
     @Command(name = "tag")
-    public void tagCommand(SlashCommandEvent event) {
+    public void tagCommand(SlashCommandInteractionEvent event) {
         String tagName = event.getOption("tag").getAsString();
         Tag tag = Tag.findByName(tagName);
         User user = event.getOption("user").getAsUser();
@@ -53,12 +53,12 @@ public class TagsFeature extends AbstractFeature {
     }
 
     @Command(name = "tag.list")
-    public void listTagsCommand(SlashCommandEvent event) {
+    public void listTagsCommand(SlashCommandInteractionEvent event) {
         String search = event.getOption("search").getAsString();
     }
 
     @Command(name = "tag.edit", permission = "tags")
-    public void editTagCommand(SlashCommandEvent event) {
+    public void editTagCommand(SlashCommandInteractionEvent event) {
         String tagName = event.getOption("tag").getAsString();
         Tag tag = Tag.findByName(tagName);
 
@@ -70,7 +70,7 @@ public class TagsFeature extends AbstractFeature {
     }
 
     @Command(name = "tag.delete", permission = "tags")
-    public void deleteTagCommand(SlashCommandEvent event) {
+    public void deleteTagCommand(SlashCommandInteractionEvent event) {
         String tagName = event.getOption("tag").getAsString();
         Tag tag = Tag.findByName(tagName);
 

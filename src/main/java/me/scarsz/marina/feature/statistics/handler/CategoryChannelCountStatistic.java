@@ -1,7 +1,7 @@
 package me.scarsz.marina.feature.statistics.handler;
 
 import me.scarsz.marina.Marina;
-import net.dv8tion.jda.api.entities.Category;
+import net.dv8tion.jda.api.entities.channel.concrete.Category;
 
 import java.util.Map;
 

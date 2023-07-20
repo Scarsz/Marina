@@ -1,13 +1,12 @@
 package me.scarsz.marina.feature;
 
-import lombok.SneakyThrows;
 import me.scarsz.marina.Command;
 import me.scarsz.marina.Marina;
-import me.scarsz.marina.feature.permissions.Permissions;
 import me.scarsz.marina.exception.InsufficientPermissionException;
+import me.scarsz.marina.feature.permissions.Permissions;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.ISnowflake;
-import net.dv8tion.jda.api.events.interaction.SlashCommandEvent;
+import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import org.jetbrains.annotations.NotNull;
 
@@ -22,9 +21,7 @@ public abstract class AbstractFeature extends ListenerAdapter implements Feature
         Marina.getInstance().getFeatures().put(this.getClass(), this);
     }
 
-    @Override
-    @SneakyThrows
-    public void onSlashCommand(@NotNull SlashCommandEvent event) {
+    public void onSlashCommand(@NotNull SlashCommandInteractionEvent event) {
         StringJoiner targetBuilder = new StringJoiner(".");
         targetBuilder.add(event.getName());
         if (event.getSubcommandGroup() != null) targetBuilder.add(event.getSubcommandGroup());

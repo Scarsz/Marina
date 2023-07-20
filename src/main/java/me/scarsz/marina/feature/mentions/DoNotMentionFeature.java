@@ -3,7 +3,7 @@ package me.scarsz.marina.feature.mentions;
 import me.scarsz.marina.feature.AbstractFeature;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.*;
-import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent;
+import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,17 +19,17 @@ public class DoNotMentionFeature extends AbstractFeature {
         super();
     }
 
-    @Override
-    public void onGuildMessageReceived(@NotNull GuildMessageReceivedEvent event) {
+    public void onGuildMessageReceived(@NotNull MessageReceivedEvent event) {
+        if (!event.isFromGuild()) return;
         Role doNotMentionRole = getDoNotMentionRole(event.getGuild());
         if (doNotMentionRole == null) return;
 
         Message referencedMessage = event.getMessage().getReferencedMessage();
         boolean referencedMessageCheck = referencedMessage != null && referencedMessage.getMember() != null && check(event.getMessage(), referencedMessage.getMember());
-        boolean mentionedMembersCheck = event.getMessage().getMentionedMembers().stream().anyMatch(member -> check(event.getMessage(), member));
+        boolean mentionedMembersCheck = event.getMessage().getMentions().getMembers().stream().anyMatch(member -> check(event.getMessage(), member));
         if (referencedMessageCheck || mentionedMembersCheck) {
             event.getMessage().reply("Hey " + event.getMember().getAsMention() + "! Please don't ping people in this server that have the " + doNotMentionRole.getAsMention() + " role. Thank you.")
-                    .allowedMentions(EnumSet.of(Message.MentionType.USER))
+                    .setAllowedMentions(EnumSet.of(Message.MentionType.USER))
                     .queue();
         }
     }

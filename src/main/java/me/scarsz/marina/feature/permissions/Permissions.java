@@ -8,7 +8,7 @@ import me.scarsz.marina.exception.InsufficientPermissionException;
 import me.scarsz.marina.feature.AbstractFeature;
 import net.dv8tion.jda.api.entities.ISnowflake;
 import net.dv8tion.jda.api.entities.User;
-import net.dv8tion.jda.api.events.interaction.SlashCommandEvent;
+import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.SubcommandData;
 import org.jongo.MongoCollection;
@@ -56,7 +56,7 @@ public class Permissions extends AbstractFeature {
     }
 
     @Command(name = "permission.grant", permission = "admin")
-    public void grantCommand(SlashCommandEvent event) {
+    public void grantCommand(SlashCommandInteractionEvent event) {
         User targetUser = event.getOption("user").getAsUser();
         String permission = event.getOption("permission").getAsString();
 
@@ -72,7 +72,7 @@ public class Permissions extends AbstractFeature {
         event.getHook().editOriginal("✅ Added permission `" + permission + "` to " + targetUser.getAsMention()).complete();
     }
     @Command(name = "permission.remove", permission = "admin")
-    public void removeCommand(SlashCommandEvent event) {
+    public void removeCommand(SlashCommandInteractionEvent event) {
         User targetUser = event.getOption("user").getAsUser();
         String permission = event.getOption("permission").getAsString();
 
@@ -88,7 +88,7 @@ public class Permissions extends AbstractFeature {
         event.getHook().editOriginal("✅ Removed permission `" + permission + "` from " + targetUser.getAsMention()).complete();
     }
     @Command(name = "permission.list", permission = "admin")
-    public void listCommand(SlashCommandEvent event) {
+    public void listCommand(SlashCommandInteractionEvent event) {
         User targetUser = event.getOption("user").getAsUser();
 
         DiscordEntity discordUser = DiscordEntity.findBySnowflake(targetUser);
@@ -103,7 +103,7 @@ public class Permissions extends AbstractFeature {
         }
     }
     @Command(name = "permission.test", permission = "admin")
-    public void testCommand(SlashCommandEvent event) {
+    public void testCommand(SlashCommandInteractionEvent event) {
         User targetUser = event.getOption("user").getAsUser();
         String permission = event.getOption("permission").getAsString();
 

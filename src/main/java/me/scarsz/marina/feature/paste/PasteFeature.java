@@ -10,10 +10,12 @@ import me.scarsz.marina.Marina;
 import me.scarsz.marina.feature.AbstractFeature;
 import me.scarsz.marina.feature.http.HttpFeature;
 import net.dv8tion.jda.api.entities.Message;
-import net.dv8tion.jda.api.events.message.guild.GuildMessageDeleteEvent;
-import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent;
-import net.dv8tion.jda.api.interactions.components.Button;
+import net.dv8tion.jda.api.events.message.MessageDeleteEvent;
+import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
+import net.dv8tion.jda.api.interactions.components.ActionRow;
 import net.dv8tion.jda.api.interactions.components.Component;
+import net.dv8tion.jda.api.interactions.components.ItemComponent;
+import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
@@ -99,9 +101,10 @@ public class PasteFeature extends AbstractFeature {
         ctx.result(result);
     }
 
-    @Override
     @SneakyThrows
-    public void onGuildMessageReceived(@NotNull GuildMessageReceivedEvent event) {
+    public void onGuildMessageReceived(@NotNull MessageReceivedEvent event) {
+        if (!event.isFromGuild()) return;
+
         for (Message.Attachment attachment : event.getMessage().getAttachments()) {
             if (TEXT_FILE_EXTENSIONS.contains(FilenameUtils.getExtension(attachment.getFileName()).toLowerCase(Locale.ROOT))) {
                 handleAttachmentPaste(event.getMessage(), attachment);
@@ -118,7 +121,7 @@ public class PasteFeature extends AbstractFeature {
                 .replace("{message}", message.getId())
                 .replace("{file}", attachment.getFileName());
 
-        List<Component> components = new LinkedList<>();
+        List<ItemComponent> components = new LinkedList<>();
         components.add(Button.link(url.replace("{type}", "raw"), "View file"));
         components.add(Button.link(url.replace("{type}", "lines"), "With line numbers"));
         if (schema != null) components.add(Button.link(url.replace("{type}", "parsed"), "Parsed"));
@@ -144,15 +147,16 @@ public class PasteFeature extends AbstractFeature {
 
                     message.reply("Paste version of `" + attachment.getFileName() + "` from " + message.getAuthor().getAsMention())
                             .setActionRow(components)
-                            .allowedMentions(EnumSet.noneOf(Message.MentionType.class))
+                            .setAllowedMentions(EnumSet.noneOf(Message.MentionType.class))
                             .mentionRepliedUser(false)
                             .queue();
                 })
                 .orTimeout(5, TimeUnit.SECONDS);
     }
 
-    @Override
-    public void onGuildMessageDelete(@NotNull GuildMessageDeleteEvent event) {
+    public void onGuildMessageDelete(@NotNull MessageDeleteEvent event) {
+        if (!event.isFromGuild()) return;
+
         event.getChannel().getHistoryAfter(event.getMessageId(), 15).queue(history -> {
             for (Message message : history.getRetrievedHistory()) {
                 if (!message.getAuthor().getId().equals(event.getJDA().getSelfUser().getId())) continue;

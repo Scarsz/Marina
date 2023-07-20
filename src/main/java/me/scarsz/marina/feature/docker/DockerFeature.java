@@ -14,15 +14,13 @@ import me.scarsz.marina.Command;
 import me.scarsz.marina.exception.InsufficientPermissionException;
 import me.scarsz.marina.feature.AbstractFeature;
 import net.dv8tion.jda.api.entities.ISnowflake;
-import net.dv8tion.jda.api.events.interaction.SelectionMenuEvent;
-import net.dv8tion.jda.api.events.interaction.SlashCommandEvent;
+import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.SubcommandData;
 import net.dv8tion.jda.api.interactions.components.ActionRow;
 import net.dv8tion.jda.api.interactions.components.selections.SelectOption;
-import net.dv8tion.jda.api.interactions.components.selections.SelectionMenu;
-import org.jetbrains.annotations.NotNull;
+import net.dv8tion.jda.api.interactions.components.selections.StringSelectMenu;
 
 import java.util.Collections;
 import java.util.List;
@@ -53,7 +51,7 @@ public class DockerFeature extends AbstractFeature {
     }
 
     @Command(name = "container.list")
-    public void listCommand(SlashCommandEvent event) {
+    public void listCommand(SlashCommandInteractionEvent event) {
         OptionMapping nameOption = event.getOption("name");
         Set<String> containers = listContainers(nameOption != null ? nameOption.getAsString() : null, event.getUser()).stream()
                 .map(this::getContainerName)
@@ -66,7 +64,7 @@ public class DockerFeature extends AbstractFeature {
         }
     }
     @Command(name = "container.restart")
-    public void restartCommand(SlashCommandEvent event) throws IllegalArgumentException, InsufficientPermissionException {
+    public void restartCommand(SlashCommandInteractionEvent event) throws IllegalArgumentException, InsufficientPermissionException {
         OptionMapping containerOption = event.getOption("container");
         if (containerOption != null) {
             String container = containerOption.getAsString();
@@ -79,7 +77,7 @@ public class DockerFeature extends AbstractFeature {
             event.getHook().editOriginal("✅ Restarted `" + container + "`").complete();
         } else {
             List<Container> containers = listContainers(null, event.getUser());
-            event.getHook().editOriginalComponents(ActionRow.of(SelectionMenu.create("list-" + event.getChannel().getId() + "-" + event.getUser().getId())
+            event.getHook().editOriginalComponents(ActionRow.of(StringSelectMenu.create("list-" + event.getChannel().getId() + "-" + event.getUser().getId())
                     .setPlaceholder("Which container do you want to restart?")
                     .setRequiredRange(1, 1)
                     .addOptions(containers.stream().map(container ->
@@ -93,7 +91,7 @@ public class DockerFeature extends AbstractFeature {
         }
     }
     @Command(name = "container.update")
-    public void updateCommand(SlashCommandEvent event) throws IllegalArgumentException, InsufficientPermissionException {
+    public void updateCommand(SlashCommandInteractionEvent event) throws IllegalArgumentException, InsufficientPermissionException {
         String container = event.getOption("container").getAsString(); //TODO allow null container & selections
         checkPermission(event.getUser(), "docker.container." + container.replace("-", ".") + ".update");
         InspectContainerResponse preInspection = inspectContainer(container);
@@ -140,12 +138,13 @@ public class DockerFeature extends AbstractFeature {
         });
     }
 
-    @Override
-    public void onSelectionMenu(@NotNull SelectionMenuEvent event) {
-        for (String value : event.getValues()) {
-            //TODO selection from commands that didn't specify container
-        }
-    }
+//    @Override
+//    public void onSelectionMenu(@NotNull SelectionMenuEvent event) {
+//        for (String value : event.getValues()) {
+//            TODO selection from commands that didn't specify container
+//        }
+//    }
+
 
     private List<Container> listContainers(String nameFilter) {
         ListContainersCmd cmd = dockerClient.listContainersCmd();
