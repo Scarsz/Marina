@@ -71,7 +71,7 @@ public class Marina {
         new DevelopmentFeature();
         new HttpFeature();
         new DockerFeature();
-        try { new PasteFeature(); } catch (IOException e) { e.printStackTrace(); }
+//        try { new PasteFeature(); } catch (IOException e) { e.printStackTrace(); }
         new DoNotMentionFeature();
 //        new TagsFeature();
 //        new StatisticsFeature();
