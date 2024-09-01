@@ -14,7 +14,9 @@ import me.scarsz.marina.Command;
 import me.scarsz.marina.exception.InsufficientPermissionException;
 import me.scarsz.marina.feature.AbstractFeature;
 import net.dv8tion.jda.api.entities.ISnowflake;
+import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
+import net.dv8tion.jda.api.interactions.AutoCompleteQuery;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.SubcommandData;
@@ -29,6 +31,8 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import static net.dv8tion.jda.api.interactions.commands.Command.Choice;
+
 public class DockerFeature extends AbstractFeature {
 
     private final DockerClient dockerClient;
@@ -42,10 +46,10 @@ public class DockerFeature extends AbstractFeature {
                         .addOption(OptionType.STRING, "name", "Name to filter containers by")
                 )
                 .addSubcommands(new SubcommandData("restart", "Restart a container")
-                        .addOption(OptionType.STRING, "container", "Container name to restart")
+                        .addOption(OptionType.STRING, "container", "Container name to restart", false, true)
                 )
                 .addSubcommands(new SubcommandData("update", "Update a container")
-                        .addOption(OptionType.STRING, "container", "Container name to update", true)
+                        .addOption(OptionType.STRING, "container", "Container name to update", true, true)
                 )
                 .queue();
     }
@@ -136,6 +140,31 @@ public class DockerFeature extends AbstractFeature {
                 }
             }
         });
+    }
+
+    @Override
+    public void onCommandAutoCompleteInteraction(CommandAutoCompleteInteractionEvent event) {
+        String[] commandPath = event.getFullCommandName().split(" ");
+        AutoCompleteQuery focusedOption = event.getFocusedOption();
+
+        if (!"container".equals(commandPath[0])) {
+            return; // not under the "container" command
+        }
+
+        if (!("update".equals(commandPath[1]) || "restart".equals(commandPath[1]))) {
+            return; // not the "update" or "restart" subcommands
+        }
+
+        if (!"container".equals(focusedOption.getName())) {
+            return; // not the "container" option
+        }
+
+        String optionValue = focusedOption.getValue().isBlank() ? null : focusedOption.getValue();
+        List<Choice> options = listContainers(optionValue, event.getUser()).stream()
+                .map(this::getContainerName)
+                .map(word -> new Choice(word, word)) // map the words to choices
+                .collect(Collectors.toList());
+        event.replyChoices(options).queue();
     }
 
 //    @Override
